@@ -64,10 +64,10 @@ public class MyController {
 			.maxSequentialToolsInvocations(2)
 			.build().chat(date).content();
 		return AiServices.builder(CricSheetJsonFileExtractor.class)
-				.chatModel(MyConfig.openAiChatModel())
-				.tools(cricSheetTools)
-				.maxSequentialToolsInvocations(2)
-				.build().chat(matchId);
+			.chatModel(MyConfig.openAiChatModel())
+			.tools(cricSheetTools)
+			.maxSequentialToolsInvocations(2)
+			.build().chat(matchId);
 	}
 	@GetMapping("/test")
 	public void test() {
