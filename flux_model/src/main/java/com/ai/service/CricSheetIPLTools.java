@@ -94,6 +94,7 @@ public class CricSheetIPLTools {
 			inningTwoDeets[i] = new overDetails(ballDeets);
 		}
 		matchDetails match =  new matchDetails(
+				root.get("info").get("dates").get(0).asText(),
 				root.get("info").get("event").get("match_number").asInt(),
 				root.get("info").get("outcome").get("winner").asText(),
 				root.get("info").get("player_of_match").get(0).asText(),
@@ -111,6 +112,7 @@ public class CricSheetIPLTools {
 	}
 	
 	public record matchDetails(
+			String match_date,
 			int match_number,
 			String winner,
 			String player_of_match,

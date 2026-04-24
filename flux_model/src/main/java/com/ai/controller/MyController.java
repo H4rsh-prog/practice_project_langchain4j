@@ -1,26 +1,19 @@
 package com.ai.controller;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.annotation.PostExchange;
 
 import com.ai.config.MyConfig;
-import com.ai.model.NoModerationModel;
 import com.ai.service.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
@@ -39,10 +32,9 @@ public class MyController {
 	@Autowired private ConfusedChatModel confusedModel;
 	private OverconfidentChatModel overconfidentModel = AiServices.builder(OverconfidentChatModel.class)
 			.streamingChatModel(MyConfig.openAiStreamingChatModel())
-			.chatMemoryProvider(memoryName->MessageWindowChatMemory.withMaxMessages(25))
+			.chatMemoryProvider(memoryName->MessageWindowChatMemory.withMaxMessages(100))
 			.build();
 	static List<ChatMessage> chatMemory = new ArrayList<>();
-	private ObjectMapper mapper = new ObjectMapper();
 	
 	@GetExchange("/chat")
 	public Flux<String> chatModel(@RequestParam("query") String query) {
@@ -56,18 +48,21 @@ public class MyController {
 	public Flux<String> chatConfidently(@RequestParam(name = "name", defaultValue = "user") String memoryName, @RequestParam("query") String query) {
 		return this.overconfidentModel.chat(memoryName, query);
 	}
-	@PostExchange("/ipl")
-	public Object ipl(@RequestParam("date") String date) throws FileNotFoundException, IOException, ClassNotFoundException{
-		String matchId = AiServices.builder(CricSheetRecordKeeper.class)
+	@GetExchange("/ipl/date")
+	public ResponseEntity<?> iplMatchByDate(@RequestParam("date") String date) throws FileNotFoundException, IOException, ClassNotFoundException{
+		CricSheetRecordKeeper keeper = AiServices.builder(CricSheetRecordKeeper.class)
 			.chatModel(MyConfig.openAiChatModel())
-			.tools(cricSheetTools)
 			.maxSequentialToolsInvocations(2)
-			.build().chat(date).content();
-		return AiServices.builder(CricSheetJsonFileExtractor.class)
-			.chatModel(MyConfig.openAiChatModel())
 			.tools(cricSheetTools)
-			.maxSequentialToolsInvocations(2)
-			.build().chat(matchId);
+			.build();
+		String matchId = keeper.chat(date).content();
+		System.err.println(matchId);
+		try {
+			Integer.parseInt(matchId);
+			return ResponseEntity.ok(cricSheetTools.fetchDataById(matchId));
+		} catch (Exception e) {
+		}
+		return ResponseEntity.badRequest().body(matchId+" please try again if the request is valid otherwise revise your request");
 	}
 	@GetMapping("/test")
 	public void test() {
