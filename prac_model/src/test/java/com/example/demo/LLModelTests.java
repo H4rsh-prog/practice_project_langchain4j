@@ -12,22 +12,52 @@ import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 
 public class LLModelTests {
-
     @BeforeAll
     static void setUp() {
 		System.out.println("STARTING TEST STACK");
 	}
-
     @AfterAll
     static void windUp() {
 		System.out.println("CLOSING TEST STACK");
 	}
-	
-//	@Test
+//    @Test
+	public void initConversation() {
+    	String BASE_URL = "http://langchain4j.dev/demo/openai/v1";
+		OpenAiChatModel model1 = OpenAiChatModel.builder()
+				.baseUrl(BASE_URL)
+				.apiKey("demo")
+				.modelName(OpenAiChatModelName.GPT_4_O_MINI)
+				.temperature(0.9)
+				.responseFormat(ResponseFormat.TEXT)
+				.build();
+		OpenAiChatModel model2 = OpenAiChatModel.builder()
+				.baseUrl(BASE_URL)
+				.apiKey("demo")
+				.modelName(OpenAiChatModelName.GPT_4_O_MINI)
+				.temperature(0.9)
+				.responseFormat(ResponseFormat.TEXT)
+				.build();
+		List<ChatMessage> chatHistory = new ArrayList<>();
+		chatHistory.add(UserMessage.from("be very blatently wrong about a random topic and then argue against anything i say"));
+		try {
+			AiMessage response;
+			while(true) {
+				response = model1.chat(ChatRequest.builder().messages(chatHistory).build()).aiMessage();
+				chatHistory.add(response);
+				System.out.println("MODEL 1 : "+response.text());
+				Thread.sleep(3000);
+				response = model2.chat(ChatRequest.builder().messages(chatHistory).build()).aiMessage();
+				chatHistory.add(response);
+				System.out.println("MODEL 2 : "+response.text());
+			}
+		} catch(Exception e) {}
+	}
+	@Test
 	public void startModel() {
 		String BASE_URL = "http://langchain4j.dev/demo/openai/v1";
 		OpenAiChatModel model = OpenAiChatModel.builder()
@@ -42,7 +72,6 @@ public class LLModelTests {
 													+ "make sure all your answers are incredibly wrong and shorter than 2 lines,"
 													+ "and for some reason you are like really obsessed with cowboy terms,"
 													+ "lastly whenever i say exit you yell at me like i stole your life savings.");
-
 		chatHistory.add(sysMsg);
 		chatHistory.add(UserMessage.from("hello can you help me find out the value of pi"));
 		ChatRequest request = ChatRequest.builder()
@@ -53,10 +82,11 @@ public class LLModelTests {
 		System.out.println("DUM DUM : "+response.text());
 		chatHistory.add(response);
 		java.util.Scanner sc = new java.util.Scanner(System.in);
-
 		try {
 			while(!chatHistory.get(chatHistory.size()-2).equals("exit")) {
-				chatHistory.add(UserMessage.from(sc.nextLine()));
+				String query = sc.nextLine();
+				if(query=="")continue;
+				chatHistory.add(UserMessage.from(query));
 				request = ChatRequest.builder()
 						.messages(chatHistory)
 						.build();

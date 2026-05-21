@@ -9,7 +9,6 @@ import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonSchema;
-import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 
 @Configuration
@@ -29,7 +28,7 @@ public class Configurations {
 				.build();
 	}
 	@Bean
-	ChatModel topicExtractorChatModel() {
+	ChatModel articleTopicExtractorChatModel() {
 		return OpenAiChatModel.builder()
 				.baseUrl("http://langchain4j.dev/demo/openai/v1")
 				.apiKey("demo")
@@ -48,6 +47,33 @@ public class Configurations {
 												.addProperty("title", JsonObjectSchema.builder()
 														.addStringProperty("text", "catchy title for the topic")
 														.build())
+												.build())
+										.build())
+								.build())
+						.build())
+				.build();
+	}
+
+	@Bean
+	ChatModel mediaTopicExtractorChatModel() {
+		return OpenAiChatModel.builder()
+				.baseUrl("http://langchain4j.dev/demo/openai/v1")
+				.apiKey("demo")
+				.modelName("gpt-4o-mini")
+				.defaultRequestParameters(ChatRequestParameters.builder()
+						.responseFormat(ResponseFormat.builder()
+								.type(ResponseFormatType.JSON)
+								.jsonSchema(JsonSchema.builder()
+										.name("media_element")
+										.rootElement(JsonObjectSchema.builder()
+												.addStringProperty("status", "always 'READY'")
+//												.addProperty("description", JsonObjectSchema.builder()
+//														.addStringProperty("text", "short description regarding the topic")
+//														.build())
+												.addStringProperty("media", "input media urn")
+//												.addProperty("title", JsonObjectSchema.builder()
+//														.addStringProperty("text", "catchy title for the topic")
+//														.build())
 												.build())
 										.build())
 								.build())
